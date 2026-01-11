@@ -3,32 +3,35 @@ local mouse = lp:GetMouse()
 local camera = workspace.CurrentCamera
 local rs = game:GetService("RunService")
 
--- UI Ayarları
+-- UI Paneli
 local ScreenGui = Instance.new("ScreenGui")
 local Main = Instance.new("Frame")
 local AimBtn = Instance.new("TextButton")
 
 ScreenGui.Parent = game:GetService("CoreGui")
-Main.Size = UDim2.new(0, 150, 0, 50)
-Main.Position = UDim2.new(0.5, -75, 0, 50)
-Main.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+Main.Size = UDim2.new(0, 160, 0, 60)
+Main.Position = UDim2.new(0.5, -80, 0.05, 0) -- Ekranın üst ortasında durur
+Main.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 Main.Active = true
 Main.Draggable = true
 
 AimBtn.Parent = Main
-AimBtn.Size = UDim2.new(1, 0, 1, 0)
-AimBtn.Text = "GENEL AIMLOCK: KAPALI"
+AimBtn.Size = UDim2.new(0.9, 0, 0.8, 0)
+AimBtn.Position = UDim2.new(0.05, 0, 0.1, 0)
+AimBtn.Text = "EVRENSEL AIM: KAPALI"
 AimBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-AimBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+AimBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+AimBtn.Font = Enum.Font.SourceSansBold
+AimBtn.TextSize = 14
 
 local active = false
 AimBtn.MouseButton1Click:Connect(function()
     active = not active
-    AimBtn.Text = active and "GENEL AIMLOCK: AÇIK" or "GENEL AIMLOCK: KAPALI"
-    AimBtn.BackgroundColor3 = active and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(40, 40, 40)
+    AimBtn.Text = active and "EVRENSEL AIM: AÇIK" or "EVRENSEL AIM: KAPALI"
+    AimBtn.BackgroundColor3 = active and Color3.fromRGB(0, 180, 0) or Color3.fromRGB(50, 50, 50)
 end)
 
--- En Yakın Düşmanı Bulma
+-- En Yakın Oyuncuyu Bulma (Evrensel)
 local function getClosestPlayer()
     local closest = nil
     local dist = math.huge
@@ -47,11 +50,12 @@ local function getClosestPlayer()
     return closest
 end
 
--- Döngü
+-- Takip Döngüsü
 rs.RenderStepped:Connect(function()
     if active then
         local target = getClosestPlayer()
         if target then
+            -- Kamerayı hedefe pürüzsüzce çevirir
             camera.CFrame = CFrame.new(camera.CFrame.Position, target.Position)
         end
     end
