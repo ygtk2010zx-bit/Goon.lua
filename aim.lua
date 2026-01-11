@@ -1,39 +1,66 @@
+-- Evrensel Aimlock (Her Oyunda Çalışır)
 local lp = game.Players.LocalPlayer
-local camera = workspace.CurrentCamera
 local mouse = lp:GetMouse()
+local camera = workspace.CurrentCamera
+local rs = game:GetService("RunService")
 
--- Basit UI
-local sg = Instance.new("ScreenGui", game:GetService("CoreGui"))
-local btn = Instance.new("TextButton", sg)
-btn.Size = UDim2.new(0, 150, 0, 50)
-btn.Position = UDim2.new(0.5, -75, 0, 10)
-btn.Text = "AIMLOCK: KAPALI"
+-- Eski panelleri sil (Çakışmasın)
+if game:GetService("CoreGui"):FindFirstChild("GlobalAimlock") then
+    game:GetService("CoreGui").GlobalAimlock:Destroy()
+end
+
+-- Panel Oluşturma
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "GlobalAimlock"
+ScreenGui.Parent = game:GetService("CoreGui")
+
+local Main = Instance.new("Frame")
+Main.Size = UDim2.new(0, 150, 0, 50)
+Main.Position = UDim2.new(0.5, -75, 0, 50) -- Ekranın üst ortası
+Main.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+Main.Draggable = true
+Main.Active = true
+Main.Parent = ScreenGui
+
+local Button = Instance.new("TextButton")
+Button.Size = UDim2.new(1, 0, 1, 0)
+Button.Text = "AIMLOCK: KAPALI"
+Button.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+Button.Parent = Main
 
 local active = false
-btn.MouseButton1Click:Connect(function()
+Button.MouseButton1Click:Connect(function()
     active = not active
-    btn.Text = active and "AIMLOCK: AÇIK" or "AIMLOCK: KAPALI"
-    btn.BackgroundColor3 = active and Color3.new(0,1,0) or Color3.new(1,1,1)
+    Button.Text = active and "AIMLOCK: AÇIK" or "AIMLOCK: KAPALI"
+    Button.BackgroundColor3 = active and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(40, 40, 40)
 end)
 
-game:GetService("RunService").RenderStepped:Connect(function()
-    if active then
-        local closest = nil
-        local dist = 1000
-        for _, v in pairs(game.Players:GetPlayers()) do
-            if v ~= lp and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
-                local pos, onScreen = camera:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
-                if onScreen then
-                    local m = (Vector2.new(pos.X, pos.Y) - Vector2.new(mouse.X, mouse.Y)).Magnitude
-                    if m < dist then
-                        closest = v.Character.HumanoidRootPart
-                        dist = m
-                    end
+-- En Yakın Oyuncuyu Algılama
+function getTarget()
+    local target = nil
+    local dist = math.huge
+    for _, v in pairs(game.Players:GetPlayers()) do
+        if v ~= lp and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+            local pos, vis = camera:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
+            if vis then
+                local mag = (Vector2.new(pos.X, pos.Y) - Vector2.new(mouse.X, mouse.Y)).Magnitude
+                if mag < dist then
+                    target = v.Character.HumanoidRootPart
+                    dist = mag
                 end
             end
         end
-        if closest then
-            camera.CFrame = CFrame.new(camera.CFrame.Position, closest.Position)
+    end
+    return target
+end
+
+-- Takip Döngüsü
+rs.RenderStepped:Connect(function()
+    if active then
+        local t = getTarget()
+        if t then
+            camera.CFrame = CFrame.new(camera.CFrame.Position, t.Position)
         end
     end
 end)
