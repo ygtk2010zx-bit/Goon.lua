@@ -1,47 +1,59 @@
-local ScreenGui = Instance.new("ScreenGui")
-local MainFrame = Instance.new("Frame")
-local Title = Instance.new("TextLabel")
-local ToggleBtn = Instance.new("TextButton")
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
-ScreenGui.Parent = game:GetService("CoreGui")
-MainFrame.Parent = ScreenGui
-MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-MainFrame.Size = UDim2.new(0, 200, 0, 100)
-MainFrame.Position = UDim2.new(0.5, -100, 0.5, -50)
-MainFrame.Active = true
-MainFrame.Draggable = true
+local Window = Rayfield:CreateWindow({
+   Name = "MM2 Katil Avcısı",
+   LoadingTitle = "Goon.lua Özel",
+   LoadingSubtitle = "by Gemini",
+   ConfigurationSaving = { Enabled = false }
+})
 
-Title.Parent = MainFrame
-Title.Text = "MM2 AIM BREAKER"
-Title.Size = UDim2.new(1, 0, 0, 30)
-Title.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+local MainTab = Window:CreateTab("Ana Menü", 4483362458) -- İkon ID
 
-ToggleBtn.Parent = MainFrame
-ToggleBtn.Position = UDim2.new(0.1, 0, 0.4, 0)
-ToggleBtn.Size = UDim2.new(0.8, 0, 0, 40)
-ToggleBtn.Text = "Anti-Aimlock: OFF"
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+local AimEnabled = false
+local EspEnabled = false
 
-local active = false
-ToggleBtn.MouseButton1Click:Connect(function()
-    active = not active
-    ToggleBtn.Text = active and "Anti-Aimlock: ON" or "Anti-Aimlock: OFF"
-    ToggleBtn.BackgroundColor3 = active and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(50, 50, 50)
-end)
+-- Aimlock Mantığı
+MainTab:CreateToggle({
+   Name = "Katil Aimlock (Sağ Tık)",
+   CurrentValue = false,
+   Callback = function(Value)
+      AimEnabled = Value
+   end,
+})
 
--- ASIL MEVZU BURASI: Aimlock'u Bozan Döngü
-game:GetService("RunService").Heartbeat:Connect(function()
-    if active then
-        local char = game.Players.LocalPlayer.Character
-        local root = char and char:FindFirstChild("HumanoidRootPart")
-        if root then
-            -- Karakteri aşırı hızlı sarsar (Görselde değil, veri bazında)
-            local oldV = root.Velocity
-            root.Velocity = Vector3.new(0, -5000, 0) -- Aim'i yere çeker
-            game:GetService("RunService").RenderStepped:Wait()
-            root.Velocity = oldV
+-- ESP Mantığı
+MainTab:CreateToggle({
+   Name = "Katili Göster (ESP)",
+   CurrentValue = false,
+   Callback = function(Value)
+      EspEnabled = Value
+   end,
+})
+
+-- Arka Plan Döngüsü
+game:GetService("RunService").RenderStepped:Connect(function()
+    for _, v in pairs(game.Players:GetPlayers()) do
+        if v ~= game.Players.LocalPlayer and v.Character then
+            local isMurderer = v.Backpack:FindFirstChild("Knife") or v.Character:FindFirstChild("Knife")
+            
+            -- ESP Kısmı
+            if EspEnabled and isMurderer then
+                if not v.Character:FindFirstChild("Highlight") then
+                    local hl = Instance.new("Highlight", v.Character)
+                    hl.FillColor = Color3.fromRGB(255, 0, 0) -- Kırmızı
+                end
+            elseif not EspEnabled or not isMurderer then
+                if v.Character:FindFirstChild("Highlight") then
+                    v.Character.Highlight:Destroy()
+                end
+            end
+
+            -- Aimlock Kısmı
+            if AimEnabled and isMurderer and game:GetService("UserInputService"):IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+                if v.Character:FindFirstChild("HumanoidRootPart") then
+                    workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, v.Character.HumanoidRootPart.Position)
+                end
+            end
         end
     end
 end)
