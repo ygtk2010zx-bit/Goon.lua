@@ -1,0 +1,58 @@
+local lp = game.Players.LocalPlayer
+local mouse = lp:GetMouse()
+local camera = workspace.CurrentCamera
+local rs = game:GetService("RunService")
+
+-- UI Ayarları
+local ScreenGui = Instance.new("ScreenGui")
+local Main = Instance.new("Frame")
+local AimBtn = Instance.new("TextButton")
+
+ScreenGui.Parent = game:GetService("CoreGui")
+Main.Size = UDim2.new(0, 150, 0, 50)
+Main.Position = UDim2.new(0.5, -75, 0, 50)
+Main.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+Main.Active = true
+Main.Draggable = true
+
+AimBtn.Parent = Main
+AimBtn.Size = UDim2.new(1, 0, 1, 0)
+AimBtn.Text = "GENEL AIMLOCK: KAPALI"
+AimBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+AimBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+
+local active = false
+AimBtn.MouseButton1Click:Connect(function()
+    active = not active
+    AimBtn.Text = active and "GENEL AIMLOCK: AÇIK" or "GENEL AIMLOCK: KAPALI"
+    AimBtn.BackgroundColor3 = active and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(40, 40, 40)
+end)
+
+-- En Yakın Düşmanı Bulma
+local function getClosestPlayer()
+    local closest = nil
+    local dist = math.huge
+    for _, v in pairs(game.Players:GetPlayers()) do
+        if v ~= lp and v.Character and v.Character:FindFirstChild("HumanoidRootPart") and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 then
+            local pos, onScreen = camera:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
+            if onScreen then
+                local magnitude = (Vector2.new(pos.X, pos.Y) - Vector2.new(mouse.X, mouse.Y)).Magnitude
+                if magnitude < dist then
+                    closest = v.Character.HumanoidRootPart
+                    dist = magnitude
+                end
+            end
+        end
+    end
+    return closest
+end
+
+-- Döngü
+rs.RenderStepped:Connect(function()
+    if active then
+        local target = getClosestPlayer()
+        if target then
+            camera.CFrame = CFrame.new(camera.CFrame.Position, target.Position)
+        end
+    end
+end)
